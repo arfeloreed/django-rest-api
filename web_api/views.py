@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404, render
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Product
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, RegistrationSerializer
 
 
 # Create your views here.
@@ -51,3 +52,24 @@ def product(request, pk):
         product.delete()
 
         return Response()
+
+
+# creating a user
+@api_view(["POST"])
+def register(request):
+    if request.method == "POST":
+        serializer = RegistrationSerializer(data=request.data)
+        data = {}
+
+        if serializer.is_valid():
+            # save the newly created user to the database
+            user = serializer.save()
+            print(f"\n{serializer}\n")
+            data["response"] = "Succefully created new user"
+
+            auth_token = Token.objects.get(user=user).key
+            data["token"] = auth_token
+        else:
+            data = serializer.errors
+
+        return Response(data)
